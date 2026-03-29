@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Davčni kalkulator za Freelancerje | Primerjava držav</title>
+    <style>
+        :root {
+            --blue: #2563eb;
+            --blue-light: #dbeafe;
+            --blue-dark: #1d4ed8;
+            --green: #16a34a;
+            --green-light: #dcfce7;
+            --red: #dc2626;
+            --red-light: #fee2e2;
+            --orange: #ea580c;
+            --orange-light: #ffedd5;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--gray-50); color: var(--gray-800); line-height: 1.6; min-height: 100vh;
+        }
+        .container { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+        header { text-align: center; margin-bottom: 24px; }
+        header h1 { font-size: 26px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
+        header p { color: var(--gray-500); font-size: 14px; }
+
+        .card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; margin-bottom: 16px; }
+        .card-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-400); margin-bottom: 16px; }
+
+        /* Country selector */
+        .country-selector { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
+        .country-btn {
+            padding: 8px 14px; border: 2px solid var(--gray-200); background: white;
+            border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--gray-600);
+            cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+        }
+        .country-btn:hover { border-color: var(--blue); color: var(--blue); }
+        .country-btn.active { border-color: var(--blue); background: var(--blue-light); color: var(--blue-dark); font-weight: 600; }
+        .country-flag { font-size: 16px; }
+
+        /* Country info */
+        .country-info { padding: 16px 20px; background: var(--blue-light); border-radius: 10px; margin-bottom: 16px; }
+        .country-info-type { font-size: 15px; font-weight: 600; color: var(--blue-dark); margin-bottom: 8px; }
+        .country-info-context { font-size: 13px; color: var(--gray-600); margin-bottom: 10px; line-height: 1.5; }
+        .country-info-lists { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .country-info-list h4 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+        .country-info-list.pros h4 { color: var(--green); }
+        .country-info-list.cons h4 { color: var(--red); }
+        .country-info-list ul { list-style: none; font-size: 12px; color: var(--gray-600); }
+        .country-info-list ul li { padding: 2px 0; padding-left: 14px; position: relative; }
+        .country-info-list.pros ul li::before { content: '+'; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+        .country-info-list.cons ul li::before { content: '-'; position: absolute; left: 2px; color: var(--red); font-weight: 700; }
+
+        /* Toggle */
+        .toggles-row { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; }
+        .toggle { display: inline-flex; background: var(--gray-100); border-radius: 8px; padding: 3px; gap: 2px; }
+        .toggle button {
+            padding: 8px 16px; border: none; background: transparent; border-radius: 6px;
+            font-size: 14px; font-weight: 500; color: var(--gray-500); cursor: pointer; transition: all 0.2s;
+        }
+        .toggle button.active { background: white; color: var(--gray-800); box-shadow: var(--shadow); }
+
+        /* Input */
+        .input-row { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+        .input-row label { font-size: 15px; font-weight: 500; color: var(--gray-700); white-space: nowrap; }
+        .amount-input-wrapper { position: relative; flex: 0 0 140px; }
+        .amount-input-wrapper input {
+            width: 100%; padding: 10px 12px; padding-right: 28px; border: 2px solid var(--gray-200);
+            border-radius: 8px; font-size: 18px; font-weight: 600; color: var(--gray-800);
+            text-align: right; outline: none; transition: border-color 0.2s; -moz-appearance: textfield;
+        }
+        .amount-input-wrapper input::-webkit-outer-spin-button,
+        .amount-input-wrapper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .amount-input-wrapper input:focus { border-color: var(--blue); }
+        .amount-input-wrapper .currency { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 16px; font-weight: 500; pointer-events: none; }
+
+        .slider-container { padding: 0 4px; }
+        input[type="range"] { width: 100%; height: 6px; -webkit-appearance: none; appearance: none; background: var(--gray-200); border-radius: 3px; outline: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--blue); cursor: pointer; box-shadow: 0 2px 6px rgba(37,99,235,0.3); }
+        input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--blue); cursor: pointer; border: none; box-shadow: 0 2px 6px rgba(37,99,235,0.3); }
+        .slider-labels { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12px; color: var(--gray-400); }
+
+        .warning { display: none; background: #fffbeb; border: 1px solid #fbbf24; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #92400e; margin-top: 12px; line-height: 1.4; }
+        .warning.visible { display: block; }
+
+        /* Result hero */
+        .result-hero { text-align: center; padding: 28px 24px; }
+        .result-hero .label { font-size: 14px; color: var(--gray-500); margin-bottom: 4px; }
+        .result-hero .amount { font-size: 42px; font-weight: 700; color: var(--green); letter-spacing: -1px; }
+        .result-hero .amount.negative { color: var(--red); }
+        .result-hero .sub { font-size: 14px; color: var(--gray-400); margin-top: 4px; }
+        .rate-badges { display: flex; gap: 8px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+        .rate-badge { display: inline-flex; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; }
+        .rate-badge.tax { background: var(--red-light); color: var(--red); }
+        .rate-badge.contrib { background: var(--orange-light); color: var(--orange); }
+        .rate-badge.total { background: var(--gray-100); color: var(--gray-700); }
+
+        /* Bar */
+        .bar { display: flex; height: 32px; border-radius: 8px; overflow: hidden; background: var(--gray-100); }
+        .bar-segment { transition: width 0.4s ease; min-width: 0; }
+        .bar-neto { background: var(--green); }
+        .bar-prispevki { background: var(--orange); }
+        .bar-dohodnina { background: var(--red); }
+        .bar-legend { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+        .bar-legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--gray-600); }
+        .bar-legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+        /* Breakdown */
+        .breakdown-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+        .breakdown-row:last-child { border-bottom: none; }
+        .breakdown-row.total { border-top: 2px solid var(--gray-200); border-bottom: none; margin-top: 4px; padding-top: 14px; font-weight: 600; }
+        .breakdown-label { font-size: 14px; color: var(--gray-600); display: flex; align-items: center; gap: 8px; }
+        .breakdown-label .dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+        .breakdown-label .note { font-size: 11px; color: var(--gray-400); font-weight: 400; }
+        .breakdown-value { font-size: 15px; font-weight: 600; color: var(--gray-800); white-space: nowrap; }
+        .breakdown-value.negative { color: var(--red); }
+        .breakdown-value.positive { color: var(--green); }
+
+        .details-toggle { display: inline-flex; align-items: center; gap: 4px; background: none; border: none; color: var(--blue); font-size: 13px; cursor: pointer; padding: 4px 0; margin-top: 4px; }
+        .details-toggle:hover { color: var(--blue-dark); }
+        .details-content { display: none; margin-top: 8px; padding: 12px 16px; background: var(--gray-50); border-radius: 8px; }
+        .details-content.open { display: block; }
+        .detail-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; color: var(--gray-500); }
+        .detail-row .val { font-weight: 500; color: var(--gray-600); }
+
+        /* Comparison */
+        .compare-row { padding: 12px 0; border-bottom: 1px solid var(--gray-100); }
+        .compare-row:last-child { border-bottom: none; }
+        .compare-row.highlight { background: var(--blue-light); margin: 0 -24px; padding: 12px 24px; border-radius: 8px; }
+        .compare-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .compare-left { display: flex; align-items: center; gap: 8px; }
+        .compare-rank { font-size: 12px; font-weight: 700; color: var(--gray-400); width: 18px; }
+        .compare-flag { font-size: 15px; }
+        .compare-name { font-size: 14px; font-weight: 600; color: var(--gray-800); }
+        .compare-type { font-size: 11px; color: var(--gray-400); }
+        .compare-right { text-align: right; }
+        .compare-neto { font-size: 15px; font-weight: 700; color: var(--green); }
+        .compare-rate { font-size: 12px; color: var(--gray-500); margin-left: 8px; }
+        .compare-bar { height: 6px; background: var(--gray-100); border-radius: 3px; overflow: hidden; }
+        .compare-bar-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.4s ease; }
+
+        footer { text-align: center; margin-top: 32px; font-size: 12px; color: var(--gray-400); line-height: 1.8; }
+
+        @media (max-width: 480px) {
+            .container { padding: 16px 12px 32px; }
+            header h1 { font-size: 22px; }
+            .result-hero .amount { font-size: 34px; }
+            .input-row { flex-direction: column; align-items: stretch; gap: 8px; }
+            .amount-input-wrapper { flex: auto; }
+            .country-info-lists { grid-template-columns: 1fr; }
+            .compare-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+            .country-btn { padding: 6px 10px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Davčni kalkulator za Freelancerje</h1>
+        <p>Primerjava obdavčitve v 18 državah</p>
+    </header>
+
+    <!-- Country selector -->
+    <div class="country-selector" id="country-selector"></div>
+
+    <!-- Country info -->
+    <div id="country-info-card"></div>
+
+    <!-- Mode toggle -->
+    <div class="toggles-row">
+        <div class="toggle">
+            <button id="btn-monthly" onclick="setMode('monthly')">Mesečno</button>
+            <button id="btn-yearly" class="active" onclick="setMode('yearly')">Letno</button>
+        </div>
+    </div>
+
+    <!-- Revenue input -->
+    <div class="card">
+        <div class="card-title">Letni prihodek iz dejavnosti</div>
+        <div class="input-row">
+            <label id="input-label">Letni prihodek:</label>
+            <div class="amount-input-wrapper">
+                <input type="number" id="amount-input" min="0" max="160000" step="1000" value="0">
+                <span class="currency">&euro;</span>
+            </div>
+        </div>
+        <div class="slider-container">
+            <input type="range" id="amount-slider" min="0" max="160000" step="1000" value="0">
+            <div class="slider-labels">
+                <span>0 &euro;</span>
+                <span id="slider-max-label">160.000 &euro;</span>
+            </div>
+        </div>
+        <div class="warning" id="warning"></div>
+    </div>
+
+    <!-- Result hero -->
+    <div class="card result-hero">
+        <div class="label" id="hero-label">Na računu ti ostane</div>
+        <div class="amount" id="neto-amount">0 &euro;</div>
+        <div class="sub" id="neto-sub"></div>
+        <div class="rate-badges">
+            <span class="rate-badge contrib" id="badge-prispevki">Prispevki: 0%</span>
+            <span class="rate-badge tax" id="badge-dohodnina">Dohodnina: 0%</span>
+            <span class="rate-badge total" id="badge-total">Skupaj državi: 0%</span>
+        </div>
+    </div>
+
+    <!-- Visual bar -->
+    <div class="card">
+        <div class="card-title">Razdelitev prihodkov</div>
+        <div style="margin-bottom:20px">
+            <div class="bar">
+                <div class="bar-segment bar-neto" id="bar-neto"></div>
+                <div class="bar-segment bar-prispevki" id="bar-prispevki"></div>
+                <div class="bar-segment bar-dohodnina" id="bar-dohodnina"></div>
+            </div>
+            <div class="bar-legend">
+                <div class="bar-legend-item"><div class="bar-legend-dot" style="background:var(--green)"></div>Neto</div>
+                <div class="bar-legend-item"><div class="bar-legend-dot" style="background:var(--orange)"></div>Prispevki</div>
+                <div class="bar-legend-item"><div class="bar-legend-dot" style="background:var(--red)"></div>Dohodnina</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Breakdown -->
+    <div class="card">
+        <div class="card-title">Podroben izračun</div>
+        <div id="breakdown-content"></div>
+    </div>
+
+    <!-- Comparison -->
+    <div class="card">
+        <div class="card-title">Primerjava z drugimi državami</div>
+        <div id="comparison-content"></div>
+    </div>
+
+    <footer>
+        Informativni izračun. Podatki so okvirni in ne nadomeščajo uradnega davčnega svetovanja.<br>
+        Primerjave temeljijo na poenostavljenih modelih za samozaposlenega z nizkimi dejanskimi stroški.
+    </footer>
+</div>
+
+<script>
+// =============================================
+// Podatki o državah
+// =============================================
+const COUNTRIES = [
+    {
+        id: 'slovenija',
+        name: 'Slovenija',
+        flag: '\u{1F1F8}\u{1F1EE}',
+        businessType: 'Normiran S.P.',
+        businessTypeDesc: 'Normirani samostojni podjetnik (80% normirani odhodki)',
+        context: 'Normiran S.P. je ugoden za prihodke do 60.000 \u20AC, ker se 80% prihodkov prizna kot odhodek. Nad tem zneskom so prihodki v celoti obdavčeni. Visoki prispevki (40,2%) financirajo javno zdravstvo, pokojninski sistem in socialno varnost.',
+        pros: [
+            'EU članica, dostop do enotnega trga',
+            '80% normirani odhodki do 60.000 \u20AC',
+            'Javno zdravstvo in pokojnina vključena',
+            'Enostavna administracija za normirance',
+        ],
+        cons: [
+            'Visoki prispevki (40,2%) tudi brez prihodkov',
+            'Min. prispevki ~6.600 \u20AC/leto',
+            'Nad 60.000 \u20AC prihodkov bistveno manj ugodno',
+            '5-letna čakalna doba za ponoven vstop',
+        ],
+        maxRevenue: 120000,
+        calculate(P) {
+            const normCap = 60000;
+            const normOdhodki = 0.80 * Math.min(P, normCap);
+            const dobicek = P - normOdhodki;
+
+            // Prispevki
+            const minBase = 1370, maxBase = 8190, rate = 0.4020;
+            const mBase = Math.max(minBase, Math.min(dobicek / 12, maxBase));
+            const prispevki = mBase * rate * 12;
+
+            const prispevkiItems = [
+                { label: 'Mesečna osnova', val: mBase, suffix: ' / mesec' },
+                { label: 'PIZ (24,35%)', val: mBase * 0.2435 * 12 },
+                { label: 'Zdravstveno (12,92%)', val: mBase * 0.1292 * 12 },
+                { label: 'Zaposlovanje (0,20%)', val: mBase * 0.0020 * 12 },
+                { label: 'Starševsko varstvo (0,20%)', val: mBase * 0.0020 * 12 },
+                { label: 'Poškodbe pri delu (0,53%)', val: mBase * 0.0053 * 12 },
+                { label: 'OZDO (2,00%)', val: mBase * 0.0200 * 12 },
+            ];
+
+            // Dohodnina cedularno
+            const prag = 72000;
+            let dohodnina;
+            const dohItems = [];
+            if (dobicek <= 0) {
+                dohodnina = 0;
+            } else if (dobicek <= prag) {
+                dohodnina = dobicek * 0.20;
+                dohItems.push({ label: `${fmtN(dobicek)} x 20%`, val: dohodnina, note: `davčna osnova do ${fmtN(prag)}` });
+            } else {
+                const t1 = prag * 0.20, t2 = (dobicek - prag) * 0.35;
+                dohodnina = t1 + t2;
+                dohItems.push({ label: `${fmtN(prag)} x 20%`, val: t1 });
+                dohItems.push({ label: `${fmtN(dobicek - prag)} x 35%`, val: t2, note: `davčna osnova nad ${fmtN(prag)}` });
+            }
+
+            return {
+                prispevki, dohodnina, neto: P - prispevki - dohodnina,
+                steps: [
+                    { label: 'Prihodki', value: P },
+                    { label: `Normirani odhodki (80% do ${fmtN(normCap)})`, value: -normOdhodki },
+                    { label: 'Davčna osnova (dobiček)', value: dobicek },
+                    { label: 'Prispevki za socialno varnost', value: -prispevki, color: 'orange', expandId: 'slo-prisp', expandItems: prispevkiItems },
+                    { label: 'Dohodnina (cedularno 20%/35%)', value: -dohodnina, color: 'red', expandId: 'slo-doh', expandItems: dohItems },
+                    { label: 'Na računu ti ostane', value: P - prispevki - dohodnina, total: true },
+                ],
+            };
+        },
+    },
+    {
+        id: 'dubaj',
+        name: 'Dubaj (UAE)',
+        flag: '\u{1F1E6}\u{1F1EA}',
+        businessType: 'Freelance Permit',
+        businessTypeDesc: 'Freelance dovoljenje v Free Zone (npr. Dubai Internet City)',
+        context: 'UAE se financira iz nafte, turizma, nepremičnin in pristojbin. 0% dohodnine je strateška odločitev za privabljanje tujih talentov in kapitala. Ni socialnega sistema - za zdravstvo in pokojnino poskrbite sami.',
+        pros: [
+            '0% dohodnine, 0% prispevkov',
+            'Mednarodno poslovno okolje',
+            'Brez omejitve prihodkov',
+            'Angleščina kot poslovni jezik',
+        ],
+        cons: [
+            'Ni EU (morebitne težave s klienti)',
+            'Visoki življenjski stroški (stan. od 1.500 \u20AC/mesec)',
+            'Freelance vizum ~5.000-10.000 \u20AC/leto',
+            'Brez pokojnine, javnega zdravstva',
+            'Ni socialnih pravic (bolniška, dopust)',
+        ],
+        maxRevenue: Infinity,
+        calculate(P) {
+            return {
+                prispevki: 0, dohodnina: 0, neto: P,
+                steps: [
+                    { label: 'Prihodki', value: P },
+                    { label: 'Dohodnina', value: 0, color: 'red' },
+                    { label: 'Prispevki', value: 0, color: 'orange' },
+                    { label: 'Na računu ti ostane', value: P, total: true },
+                ],
+            };
+        },
+    },
+    {
+        id: 'gruzija',
+        name: 'Gruzija',
+        flag: '\u{1F1EC}\u{1F1EA}',
+        businessType: 'Mikro podjetje',
+        businessTypeDesc: 'Status mikro podjetja (Individual Entrepreneur) - 1% davek na prihodke',
+        context: 'Gruzija z ultra nizkim 1% davkom ciljno privablja digitalne nomade in IT freelancerje. Nizki življenjski stroški (~500-800 \u20AC/mesec) dodatno povečujejo privlačnost. Brez EU prednosti in z omejenim socialnim sistemom.',
+        pros: [
+            'Samo 1% davek na prihodke',
+            'Zelo nizki življenjski stroški',
+            'Enostavna registracija',
+            'Limit do ~170.000 \u20AC prihodkov',
+            'Ni obveznih socialnih prispevkov',
+        ],
+        cons: [
+            'Ni EU članica',
+            'Omejeno bančništvo (SWIFT/SEPA omejen)',
+            'Nestabilno politično okolje',
+            'Omejen zdravstveni sistem',
+            'Brez socialne varnosti',
+        ],
+        maxRevenue: 170000,
+        calculate(P) {
+            const tax = P * 0.01;
+            return {
+                prispevki: 0, dohodnina: tax, neto: P - tax,
+                steps: [
+                    { label: 'Prihodki', value: P },
+                    { label: 'Davek za mikro podjetje (1%)', value: -tax, color: 'red' },
+                    { label: 'Prispevki', value: 0, color: 'orange' },
+                    { label: 'Na računu ti ostane', value: P - tax, total: true },
+                ],
+            };
+        },
+    },
+    {
+        id: 'estonija',
+        name: 'Estonija',
+        flag: '\u{1F1EA}\u{1F1EA}',
+        businessType: 'OÜ (d.o.o.)',
+        businessTypeDesc: 'Osaühing (OÜ) - 0% na zadržan dobiček, 20% ob izplačilu',
+        context: 'Estonija privablja podjetnike z edinstvenim modelom: 0% davka dokler dobiček ostane v podjetju. Ob izplačilu plačate 20% CIT. Prek programa e-Residency lahko podjetje vodite popolnoma online od kjerkoli.',
+        pros: [
+            'EU članica',
+            '0% davek na zadržan dobiček',
+            'e-Residency - vse online',
+            'Enostavna administracija',
+            'Nizki stroški ustanovitve (~200 \u20AC)',
+        ],
+        cons: [
+            '20% davek ob izplačilu dobička',
+            '33% socialni davek na plačo',
+            'Potrebna minimalna plača direktorju',
+            'Računovodski stroški (~100 \u20AC/mesec)',
+            'Skromna socialna varnost',
+        ],
+        maxRevenue: Infinity,
+        calculate(P) {
+            const minSalary = Math.min(P, 820 * 12); // 9.840 EUR
+            const socialTax = minSalary * 0.33;
+            const taxFree = 7848;
+            const incomeTax = Math.max(0, minSalary - taxFree) * 0.20;
+            const profit = Math.max(0, P - minSalary - socialTax);
+            const cit = profit * 0.20;
+            const neto = P - socialTax - incomeTax - cit;
+            return {
+                prispevki: socialTax, dohodnina: incomeTax + cit, neto,
+                steps: [
+                    { label: 'Prihodki v podjetje (OÜ)', value: P },
+                    { label: 'Plača direktorju (min.)', value: -minSalary, note: 'strošek podjetja' },
+                    { label: 'Socialni davek na plačo (33%)', value: -socialTax, color: 'orange' },
+                    { label: 'Dohodnina na plačo (20%)', value: -incomeTax, color: 'red', note: `olajšava ${fmtN(taxFree)}` },
+                    { label: 'Dobiček podjetja', value: profit },
+                    { label: 'Davek ob izplačilu dobička (20%)', value: -cit, color: 'red' },
+                    { label: 'Na računu ti ostane', value: neto, total: true },
+                ],
+            };
+        },
+    },
+    {
+        id: 'belgija',
+        name: 'Belgija',
+        flag: '\u{1F1E7}\u{1F1EA}',
+        businessType: 'Eenmanszaak',
+        businessTypeDesc: 'Eenmanszaak (samostojni podjetnik) - progresivna obdavčitev do 50%',
+        context: 'Belgija ima eno najvišjih obdavčitev v EU. Visoki davki financirajo obsežno socialno varnost: brezplačno zdravstvo, visoke pokojnine, velikodušne nadomestila za bolniško in brezposelnost. Sistem je zasnovan na solidarnosti.',
+        pros: [
+            'EU, centralna lega v Evropi',
+            'Odlično zdravstvo in socialna varnost',
+            'Visoke pokojnine',
+            'Močna zaščita delavcev',
+        ],
+        cons: [
+            'Efektivna obdavčitev ~45-50%',
+            'Dohodnina do 50% + občinski pribitek',
+            'Prispevki ~20,5% na dohodek',
+            'Zelo kompleksen davčni sistem',
+            'Visoki minimalni prispevki (~3.400 \u20AC/leto)',
+        ],
+        maxRevenue: Infinity,
+        calculate(P) {
+            // Social contributions
+            let sc;
+            if (P <= 70857) { sc = P * 0.205; }
+            else if (P <= 104422) { sc = 70857 * 0.205 + (P - 70857) * 0.1416; }
+            else { sc = 70857 * 0.205 + (104422 - 70857) * 0.1416; }
+            sc = Math.max(sc, 851 * 4);
+
+            // Income tax
+            const taxFree = 10160;
+            const taxable = Math.max(0, P - sc - taxFree);
+            let tax = 0, rem = taxable;
+            const bkts = [
+                { w: 15200, r: 0.25 }, { w: 11630, r: 0.40 },
+                { w: 19610, r: 0.45 }, { w: Infinity, r: 0.50 },
+            ];
+            for (const b of bkts) {
+                const a = Math.min(rem, b.w); tax += a * b.r; rem -= a;
+                if (rem <= 0) break;
+            }
+            tax *= 1.07; // municipal
+            const neto = P - sc - tax;
+
+            return {
+                prispevki: sc, dohodnina: tax, neto,
+                steps: [
+                    { label: 'Prihodki', value: P },
+                    { label: 'Prispevki za socialno varnost (20,5%)', value: -sc, color: 'orange' },
+                    { label: `Davčna olajšava`, value: -taxFree, note: 'se ne plača' },
+                    { label: 'Davčna osnova', value: taxable },
+                    { label: 'Dohodnina (25-50%) + občinski pribitek', value: -tax, color: 'red' },
+                    { label: 'Na računu ti ostane', value: neto, total: true },
+                ],
+            };
+        },
+    },
+    {
+        id: 'danska',
+        name: 'Danska',
+        flag: '\u{1F1E9}\u{1F1F0}',
+        businessType: 'Enkeltmandsvirksomhed',
+        businessTypeDesc: 'Enkeltmandsvirksomhed (samostojni podjetnik) - visoka progresivna obdavčitev',
+        context: 'Danski model "flexicurity" kombinira visoke davke z vrhunskimi javnimi storitvami. Brezplačno zdravstvo, izobraževanje (vključno z univerzo), velikodušna socialna podpora in visoka kakovost življenja. Davki financirajo eno najboljših družb na svetu.',
+        pros: [
+            'EU, najvišja kakovost življenja',
+            'Brezplačno zdravstvo in izobraževanje',
+            'Velikodušna socialna podpora',
+            'Transparenten in digitaliziran sistem',
+            'Visoka stopnja zaupanja in varnosti',
+        ],
+        cons: [
+            'Dohodnina do 52% (AM-bidrag + dohodnina)',
+            'AM-bidrag 8% že od bruto prihodkov',
+            'Najvišji davki v EU',
+            'Zelo visoki življenjski stroški',
+        ],
+        maxRevenue: Infinity,
+        calculate(P) {
+            const am = P * 0.08;
+            const afterAm = P - am;
+            const allowance = 6670;
+            const taxable = Math.max(0, afterAm - allowance);
+            const topThreshold = 76400;
+            const baseRate = 0.3777;
+            let tax;
+            if (taxable <= topThreshold) {
+                tax = taxable * baseRate;
+            } else {
+                tax = topThreshold * baseRate + (taxable - topThreshold) * (baseRate + 0.15);
+            }
+            const neto = P - am - tax;
+
+            return {
+                prispevki: am, dohodnina: tax, neto,
+                steps: [
+                    { label: 'Prihodki', value: P },
+                    { label: 'AM-bidrag (8%)', value: -am, color: 'orange', note: 'prispevek za trg dela' },
+                    { label: `Osebna olajšava`, value: -allowance, note: 'se ne plača' },
+                    { label: 'Davčna osnova', value: taxable },
+                    { label: 'Dohodnina (37,8% + 15% nad 76.400)', value: -tax, color: 'red' },
+                    { label: 'Na računu ti ostane', value: neto, total: true },
+                ],
+            };
+        },
+    },
+    {
+        id: 'hrvaska',
+        name: 'Hrvaška',
+        flag: '\u{1F1ED}\u{1F1F7}',
+        businessType: 'Paušalni obrt',
+        businessTypeDesc: 'Paušalni obrt - fiksni nizki davek do 60.000 \u20AC/leto',
+        context: 'Hrvaška ponuja izjemno ugoden paušalni obrt za prihodke do 60.000 \u20AC. Davek je fiksen (203-1.080 \u20AC/leto), prispevki pa znašajo le ~3.500 \u20AC/leto. Nad 60.000 \u20AC je potreben prehod na redni obrt s progresivno obdavčitvijo.',
+        pros: [
+            'EU članica',
+            'Paušalni obrt: fiksni zelo nizek davek',
+            'Nizki prispevki (~3.500 \u20AC/leto)',
+            'Nizki življenjski stroški',
+            'Enostavna administracija, brez DDV do 60k',
+        ],
+        cons: [
+            'Limit 60.000 \u20AC/leto za paušalni obrt',
+            'Nad 60k bistveno višja obdavčitev (~40%)',
+            'Manjši IT ekosistem',
+            'Birokracija pri rednem obrtu',
+        ],
+        maxRevenue: 60000,
+        calculate(P) {
+            // Paušalni obrt: fiksni davek + fiksni prispevki
+            const contrib = 290.98 * 12; // ~3,492 EUR/leto
+            let tax;
+            if (P <= 0) tax = 0;
+            else if (P <= 11300) tax = 203.40;
+            else if (P <= 15300) tax = 275.40;
+            else if (P <= 19900) tax = 358.20;
+            else if (P <= 30600) tax = 550.80;
+            else if (P <= 40000) tax = 720.00;
+            else if (P <= 50000) tax = 900.00;
+            else if (P <= 60000) tax = 1080.00;
+            else {
+                // Nad 60k: redni obrt (poenostavljeno)
+                const cRate = 0.365 / 1.365; // ~26.7% efektivno
+                const c = P * cRate;
+                const profit = P - c;
+                const allowance = 7200;
+                const taxable = Math.max(0, profit - allowance);
+                tax = Math.min(taxable, 60000) * 0.20 + Math.max(0, taxable - 60000) * 0.30;
+                const neto = P - c - tax;
+                return {
+                    prispevki: c, dohodnina: tax, neto,
+                    steps: [
+                        { label: 'Prihodki', value: P },
+                        { label: 'Prispevki (36,5% - PIZ + zdravstveno)', value: -c, color: 'orange' },
+                        { label: 'Osebna olajšava', value: -allowance, note: 'se ne plača' },
+                        { label: 'Dohodnina (20% / 30%)', value: -tax, color: 'red' },
+                        { label: 'Na računu ti ostane', value: neto, total: true },
+                    ],
+                };
+            }
+            const neto = P - contrib - tax;
+            return {
+                prispevki: contrib, dohodnina: tax, neto,
+                steps: [
+                    { label: 'Prihodki', value: P },
+                    { label: 'Prispevki (fiksni mesečni)', value: -contrib, color: 'orange', note: '~291 \u20AC/mesec' },
+                    { label: 'Paušalni davek (fiksni)', value: -tax, color: 'red' },
+                    { label: 'Na računu ti ostane', value: neto, total: true },
+                ],
+            };
+        },
+    },
+    {
+        id: 'avstrija',
+        name: 'Avstrija',
+        flag: '\u{1F1E6}\u{1F1F9}',
+        businessType: 'Einzelunternehmen',
+        businessTypeDesc: 'Einzelunternehmen (samostojni podjetnik) - progresivna obdavčitev + SVS',
+        context: 'Avstrija ima visoke prispevke za socialno varnost (SVS ~26,8%) in progresivno dohodnino do 55%. V zameno ponuja odlično javno zdravstvo, visoke pokojnine in kakovostno infrastrukturo. Gewinnfreibetrag (15% olajšava) nekoliko zniža osnovo.',
+        pros: [
+            'EU, stabilno okolje, centralna lega',
+            'Gewinnfreibetrag: 15% olajšava na dobiček',
+            '0% dohodnina do 13.308 \u20AC',
+            'Odlična infrastruktura in zdravstvo',
+            'Visoka kakovost življenja',
+        ],
+        cons: [
+            'SVS prispevki 26,83% na dobiček',
+            'Dohodnina do 50-55%',
+            'Skupna obremenitev pri visokih prihodkih ~45%+',
+            'Visoki življenjski stroški',
+            'Kompleksen davčni sistem',
+        ],
+        maxRevenue: Infinity,
+        calculate(P) {
+            // SVS: 26.83% na dobiček (ki je po odštetju SVS - krožni izračun)
+            // Efektivna stopnja: 26.83% / 1.2683 ≈ 21.15%
+            const svsRate = 0.2683;
+            const accidentY = 12.07 * 12; // ~145 EUR/leto
+            const minBaseY = 551 * 12;  // ~6,612
+            const maxBaseY = 8085 * 12; // ~97,020
+
+            let svsBase = P / (1 + svsRate); // profit after SVS
+            svsBase = Math.max(minBaseY, Math.min(svsBase, maxBaseY));
+            const svs = svsBase * svsRate + accidentY;
+
+            const profit = P - svs;
+            // Gewinnfreibetrag: 15%, max 4,950
+            const gfb = Math.min(Math.max(0, profit) * 0.15, 4950);
+            const taxable = Math.max(0, profit - gfb);
+
+            // Progressive brackets
+            const brackets = [
+                { l: 13308, r: 0 }, { l: 21617, r: 0.20 }, { l: 35836, r: 0.30 },
+                { l: 69166, r: 0.40 }, { l: 103072, r: 0.48 }, { l: 1000000, r: 0.50 },
+                { l: Infinity, r: 0.55 },
+            ];
+            let tax = 0, rem = taxable, prev = 0;
+            for (const b of brackets) {
+                const w = b.l - prev;
+                const a = Math.min(rem, w);
+                tax += a * b.r;
+                rem -= a; prev = b.l;
+                if (rem <= 0) break;
+            }
+            const neto = P - svs - tax;
+            return {
+                prispevki: svs, dohodnina: tax, neto,
+                steps: [
+                    { label: 'Prihodki', value: P },
+                    { label: 'SVS prispevki (26,83% + nezgodno)', value: -svs, color: 'orange' },
+                    { label: 'Dobiček', value: profit },
+                    { label: 'Gewinnfreibetrag (15%)', value: -gfb, note: 'max 4.950 \u20AC' },
+                    { label: 'Dohodnina (0-55%)', value: -tax, color: 'red' },
+                    { label: 'Na računu ti ostane', value: neto, total: true },
+                ],
+            };
+        },
+    },
+    {
+        id: 'italija',
+        name: 'Italija',
+        flag: '\u{1F1EE}\u{1F1F9}',
+        businessType: 'Partita IVA (Forfettario)',
+        businessTypeDesc: 'Regime Forfettario - 15% pavšalni davek, brez DDV',
+        context: 'Italija ponuja režim forfettario za freelancerje do 85.000 \u20AC. Za programerje se 67% prihodkov šteje kot obdavčljiv dohodek (33% so "normirani stroški"). Davek je le 15% (ali 5% prvih 5 let). INPS prispevki (26,2%) pa so kljub temu precejšnji.',
+        pros: [
+            'EU članica',
+            'Regime forfettario: 15% pavšalni davek',
+            '5% davek prvih 5 let (startup)',
+            'Brez DDV obveznosti',
+            'Enostavno knjigovodstvo',
+        ],
+        cons: [
+            'Limit 85.000 \u20AC za forfettario',
+            'INPS prispevki 26,23% na davčno osnovo',
+            'Nad 85k zelo visoka obdavčitev (IRPEF 23-43%)',
+            'Kompleksna birokracija',
+            'Visoki življenjski stroški na severu',
+        ],
+        maxRevenue: 85000,
+        calculate(P) {
+            // Regime forfettario za programerja (ATECO 62.01.00)
+            const coeff = 0.67; // 67% prihodkov je obdavčljivih
+            const taxable = P * coeff;
+            const inps = taxable * 0.2623;
+            const taxBase = Math.max(0, taxable - inps);
+            const tax = taxBase * 0.15;
+            const neto = P - inps - tax;
+            return {
+                prispevki: inps, dohodnina: tax, neto,
+                steps: [
+                    { label: 'Prihodki', value: P },
+                    { label: 'Davčna osnova (67% koeficient)', value: taxable, note: '33% normirani stroški' },
+                    { label: 'INPS prispevki (26,23%)', value: -inps, color: 'orange' },
+                    { label: 'Osnova za davek', value: taxBase },
+                    { label: 'Forfettario davek (15%)', value: -tax, color: 'red' },
+                    { label: 'Na računu ti ostane', value: neto, total: true },
+                ],
+            };
+        },
+    },
+    {
+        id: 'malta',
+        name: 'Malta',
+        flag: '\u{1F1F2}\u{1F1F9}',
+        businessType: 'Sole Trader',
+        businessTypeDesc: 'Sole Trader (samostojni podjetnik) - progresivna obdavčitev do 35%',
+        context: 'Malta kot EU članica z angleškim jezikom ponuja zmerno obdavčitev. Prispevki za socialno varnost so omejeni na max ~5.564 \u20AC/leto. Dohodnina je progresivna do 35%, kar je nižje kot v večini zahodnoevropskih držav.',
+        pros: [
+            'EU članica, angleški jezik',
+            'Nizki prispevki (max ~5.564 \u20AC/leto)',
+            '0% dohodnina do 9.100 \u20AC',
+            'Max 35% dohodnina (nižje kot Z Evropa)',
+            'Mednarodno poslovno okolje',
+        ],
+        cons: [
+            'Dohodnina 25% že od 14.500 \u20AC',
+            '35% nad 60.000 \u20AC',
+            'Visoki življenjski stroški (otok)',
+            'Majhen lokalni trg',
+            'Omejene javne storitve v primerjavi z Z Evropo',
+        ],
+        maxRevenue: Infinity,
+        calculate(P) {
+            // SSC: 15% of net profit, min 1,744, max 5,564
+            // SSC is deductible: SSC = 0.15 * P / 1.15, clamped
+            let ssc = 0.15 * P / 1.15;
+            ssc = Math.max(P > 0 ? 1744 : 0, Math.min(ssc, 5564));
+
+            const chargeable = Math.max(0, P - ssc);
+            // Single rates
+            const brackets = [
+                { l: 9100, r: 0 }, { l: 14500, r: 0.15 },
+                { l: 60000, r: 0.25 }, { l: Infinity, r: 0.35 },
+            ];
+            let tax = 0, rem = chargeable, prev = 0;
+            for (const b of brackets) {
+                const w = b.l - prev;
+                const a = Math.min(rem, w);
+                tax += a * b.r;
+                rem -= a; prev = b.l;
+                if (rem <= 0) break;
+            }
+            const neto = P - ssc - tax;
+            return {
+                prispevki: ssc, dohodnina: tax, neto,
+                steps: [
+                    { label: 'Prihodki', value: P },
+                    { label: 'Prispevki SSC (15%)', value: -ssc, color: 'orange', note: 'max 5.564 \u20AC/leto' },
+                    { label: 'Obdavčljivi dohodek', value: chargeable },
+                    { label: 'Dohodnina (0-35%)', value: -tax, color: 'red' },
+                    { label: 'Na računu ti ostane', value: neto, total: true },
+                ],
+            };
+        },
+    },
+    {
+        id: 'irska',
+        name: 'Irska',
+        flag: '\u{1F1EE}\u{1F1EA}',
+        businessType: 'Sole Trader',
+        businessTypeDesc: 'Sole Trader - dohodnina 20/40% + USC + PRSI',
+        context: 'Irska je magnet za tech podjetja (Apple, Google, Meta) zaradi 12,5% davka na dobiček podjetij. Za samozaposlene pa je sistem manj ugoden: dohodnina do 40%, plus USC in PRSI dvigneta efektivno stopnjo na ~50% nad 100k.',
+        pros: [
+            'EU članica, angleški jezik',
+            'Močan IT sektor in ekosistem',
+            'Earned Income Credit (1.875 \u20AC)',
+            'Relativno enostaven sistem',
+        ],
+        cons: [
+            'Dohodnina 40% nad 42.000 \u20AC',
+            'USC do 8% (11% nad 100k)',
+            'PRSI 4% brez zgornje meje',
+            'Skupna mejna stopnja ~55% nad 100k',
+            'Visoki življenjski stroški (Dublin)',
+        ],
+        maxRevenue: Infinity,
+        calculate(P) {
+            // Income tax: 20% do 42k, 40% nad
+            let grossTax = Math.min(P, 42000) * 0.20 + Math.max(0, P - 42000) * 0.40;
+            const credits = 1875 + 1875;
+            const incomeTax = Math.max(0, grossTax - credits);
+
+            // USC
+            let usc = 0, rem = P, prev = 0;
+            const uscB = [
+                {l:12012,r:0.005},{l:25760,r:0.02},{l:70044,r:0.035},{l:100000,r:0.08},{l:Infinity,r:0.11}
+            ];
+            for (const b of uscB) { const w=b.l-prev; const a=Math.min(rem,w); usc+=a*b.r; rem-=a; prev=b.l; if(rem<=0)break; }
+
+            // PRSI Class S: 4%, min 500
+            const prsi = P > 0 ? Math.max(500, P * 0.04) : 0;
+            const dohodnina = incomeTax + usc;
+            const neto = P - dohodnina - prsi;
+            return {
+                prispevki: prsi, dohodnina, neto,
+                steps: [
+                    { label: 'Prihodki', value: P },
+                    { label: 'Dohodnina (20%/40%)', value: -incomeTax, color: 'red', note: 'po odbitku kreditov 3.750 \u20AC' },
+                    { label: 'USC (0,5-11%)', value: -usc, color: 'red' },
+                    { label: 'PRSI prispevki (4%)', value: -prsi, color: 'orange', note: 'min 500 \u20AC' },
+                    { label: 'Na računu ti ostane', value: neto, total: true },
+                ],
+            };
+        },
+    },
+    {
+        id: 'uk',
+        name: 'Velika Britanija',
+        flag: '\u{1F1EC}\u{1F1E7}',
+        businessType: 'Sole Trader',
+        businessTypeDesc: 'Sole Trader - dohodnina do 45% + National Insurance',
+        context: 'UK ima razmeroma enostaven davčni sistem za samozaposlene. Personal Allowance (12.570 GBP brez davka) in nizek NI (6%) delata nižje prihodke ugodne. Pozor: osebna olajšava se ukinja nad 100k GBP, kar ustvari efektivno 60% stopnjo. Ni več EU članica.',
+        pros: [
+            'Angleški jezik, velik trg',
+            'Personal Allowance 12.570 GBP brez davka',
+            'NI Class 4 le 6% (znižan)',
+            'Enostavna registracija',
+            'Močan fintech/tech sektor',
+        ],
+        cons: [
+            'Ni več EU (Brexit)',
+            'Dohodnina do 45%',
+            'Efektivna 60% stopnja med 100-125k GBP',
+            'Visoki življenjski stroški (London)',
+            'Potreben vizum za delo',
+        ],
+        maxRevenue: Infinity,
+        calculate(P_eur) {
+            const gbpRate = 0.85;
+            const P = P_eur * gbpRate;
+            let pa = 12570;
+            if (P > 100000) pa = Math.max(0, 12570 - (P - 100000) / 2);
+
+            let tax = 0;
+            if (P > pa) {
+                const basicTop = pa + 37700;
+                const basicAmt = Math.max(0, Math.min(P, basicTop) - pa);
+                tax += basicAmt * 0.20;
+                if (P > basicTop) {
+                    tax += (Math.min(P, 125140) - basicTop) * 0.40;
+                }
+                if (P > 125140) {
+                    tax += (P - 125140) * 0.45;
+                }
+            }
+
+            let ni = 0;
+            if (P > 12570) {
+                ni = Math.min(P - 12570, 50270 - 12570) * 0.06;
+                if (P > 50270) ni += (P - 50270) * 0.02;
+            }
+
+            const toEur = 1 / gbpRate;
+            const prispevki = ni * toEur;
+            const dohodnina = tax * toEur;
+            const neto = P_eur - prispevki - dohodnina;
+            return {
+                prispevki, dohodnina, neto,
+                steps: [
+                    { label: `Prihodki (${Math.round(P).toLocaleString('sl-SI')} GBP)`, value: P_eur },
+                    { label: `Personal Allowance (${pa.toLocaleString('sl-SI')} GBP)`, value: -(pa * toEur), note: 'brez davka' },
+                    { label: 'Dohodnina (20/40/45%)', value: -dohodnina, color: 'red' },
+                    { label: 'National Insurance (6%/2%)', value: -prispevki, color: 'orange' },
+                    { label: 'Na računu ti ostane', value: neto, total: true },
+                ],
+            };
+        },
+    },
+    {
+        id: 'kalifornija',
+        name: 'Kalifornija (ZDA)',
+        flag: '\u{1F1FA}\u{1F1F8}',
+        businessType: 'Sole Proprietorship',
+        businessTypeDesc: 'Sole Proprietorship - federalni + državni davek + SE tax 15,3%',
+        context: 'Kalifornija združuje federalni davčni sistem (10-37%) z enim najvišjih državnih davkov v ZDA (do 13,3%). Poleg tega samozaposleni plačajo 15,3% self-employment tax (Social Security + Medicare). Skupna obremenitev je med najvišjimi na svetu.',
+        pros: [
+            'Največji tech ekosistem (Silicon Valley)',
+            'Dostop do ogromnega US trga',
+            'Visoke plače/tarife za IT',
+            'Močan pravni sistem',
+        ],
+        cons: [
+            'Self-employment tax 15,3%',
+            'Federalni davek do 37%',
+            'Državni davek do 13,3%',
+            'Skupna obremenitev ~40-45%',
+            'Izjemno visoki življenjski stroški',
+            'Kompleksen davčni sistem (federal + state)',
+        ],
+        maxRevenue: Infinity,
+        calculate(P_eur) {
+            const usdRate = 1.08;
+            const P = P_eur * usdRate;
+
+            // Self-employment tax
+            const seBase = P * 0.9235;
+            const seTax = Math.min(seBase, 176100) * 0.124 + seBase * 0.029 + Math.max(0, seBase - 200000) * 0.009;
+            const halfSE = seTax / 2;
+
+            // Federal income tax
+            const fedTaxable = Math.max(0, P - 15000 - halfSE);
+            const fedBkts = [{w:11925,r:0.10},{w:36550,r:0.12},{w:54875,r:0.22},{w:93950,r:0.24},{w:53225,r:0.32},{w:375825,r:0.35},{w:Infinity,r:0.37}];
+            let fedTax = 0, rem = fedTaxable;
+            for (const b of fedBkts) { const a=Math.min(rem,b.w); fedTax+=a*b.r; rem-=a; if(rem<=0)break; }
+
+            // California state tax
+            const caTaxable = Math.max(0, P - 5540);
+            const caBkts = [{w:10756,r:0.01},{w:14743,r:0.02},{w:14746,r:0.04},{w:15621,r:0.06},{w:14746,r:0.08},{w:290047,r:0.093},{w:72128,r:0.103},{w:288527,r:0.113},{w:Infinity,r:0.123}];
+            let caTax = 0; rem = caTaxable;
+            for (const b of caBkts) { const a=Math.min(rem,b.w); caTax+=a*b.r; rem-=a; if(rem<=0)break; }
+
+            const toEur = 1 / usdRate;
+            const prispevki = seTax * toEur;
+            const dohodnina = (fedTax + caTax) * toEur;
+            const neto = P_eur - prispevki - dohodnina;
+            return {
+                prispevki, dohodnina, neto,
+                steps: [
+                    { label: `Prihodki (${Math.round(P).toLocaleString('sl-SI')} USD)`, value: P_eur },
+                    { label: 'Self-employment tax (15,3%)', value: -prispevki, color: 'orange', note: 'Soc. Security + Medicare' },
+                    { label: 'Federalna dohodnina (10-37%)', value: -(fedTax * toEur), color: 'red' },
+                    { label: 'Kalifornijski davek (1-13,3%)', value: -(caTax * toEur), color: 'red' },
+                    { label: 'Na računu ti ostane', value: neto, total: true },
+                ],
+            };
+        },
+    },
+    {
+        id: 'wyoming',
+        name: 'Wyoming (ZDA)',
+        flag: '\u{1F1FA}\u{1F1F8}',
+        businessType: 'Sole Proprietorship / LLC',
+        businessTypeDesc: 'LLC ali Sole Proprietorship - 0% državni davek, samo federalni',
+        context: 'Wyoming je najbolj davčno ugodna zvezna država v ZDA: 0% državni davek na dohodek, 0% korporativni davek, nizki življenjski stroški. Federalni davki (dohodnina + SE tax) pa še vedno veljajo. Priljubljena izbira za remote freelancerje v ZDA.',
+        pros: [
+            '0% državni davek na dohodek',
+            'Nizki življenjski stroški',
+            'Enostavne LLC pravila',
+            'Močna zasebnost podjetij',
+            'Brez korporativnega davka',
+        ],
+        cons: [
+            'Federalni davki še vedno (do 37%)',
+            'Self-employment tax 15,3%',
+            'Skupna obremenitev še vedno ~30%+',
+            'Odmaknjena lokacija',
+            'Majhen lokalni trg',
+        ],
+        maxRevenue: Infinity,
+        calculate(P_eur) {
+            const usdRate = 1.08;
+            const P = P_eur * usdRate;
+
+            const seBase = P * 0.9235;
+            const seTax = Math.min(seBase, 176100) * 0.124 + seBase * 0.029 + Math.max(0, seBase - 200000) * 0.009;
+            const halfSE = seTax / 2;
+
+            const fedTaxable = Math.max(0, P - 15000 - halfSE);
+            const fedBkts = [{w:11925,r:0.10},{w:36550,r:0.12},{w:54875,r:0.22},{w:93950,r:0.24},{w:53225,r:0.32},{w:375825,r:0.35},{w:Infinity,r:0.37}];
+            let fedTax = 0, rem = fedTaxable;
+            for (const b of fedBkts) { const a=Math.min(rem,b.w); fedTax+=a*b.r; rem-=a; if(rem<=0)break; }
+
+            const toEur = 1 / usdRate;
+            const prispevki = seTax * toEur;
+            const dohodnina = fedTax * toEur;
+            const neto = P_eur - prispevki - dohodnina;
+            return {
+                prispevki, dohodnina, neto,
+                steps: [
+                    { label: `Prihodki (${Math.round(P).toLocaleString('sl-SI')} USD)`, value: P_eur },
+                    { label: 'Self-employment tax (15,3%)', value: -prispevki, color: 'orange', note: 'Soc. Security + Medicare' },
+                    { label: 'Federalna dohodnina (10-37%)', value: -dohodnina, color: 'red' },
+                    { label: 'Državni davek (Wyoming)', value: 0, color: 'red', note: '0%' },
+                    { label: 'Na računu ti ostane', value: neto, total: true },
+                ],
+            };
+        },
+    },
+    {
+        id: 'ciper',
+        name: 'Ciper',
+        flag: '\u{1F1E8}\u{1F1FE}',
+        businessType: 'Self-Employed',
+        businessTypeDesc: 'Self-Employed - 0% do 19.500 \u20AC, progresivno do 35%',
+        context: 'Ciper je EU članica s privlačnim davčnim okoljem: 0% dohodnina do 19.500 \u20AC, korporativni davek le 12,5%, brez davka na dividende. Priljubljena izbira za IT podjetja. Prispevki (16,6% + 4% GHS) so zmerni in omejeni z zgornjo mejo.',
+        pros: [
+            'EU članica',
+            '0% dohodnina do 19.500 \u20AC',
+            'Brez davka na dividende',
+            '12,5% CIT (med najnižjimi v EU)',
+            'Angleški jezik kot poslovni jezik',
+            'Ugodno podnebje',
+        ],
+        cons: [
+            'Prispevki 16,6% + 4% GHS = 20,6%',
+            'Dohodnina do 35% nad 60k',
+            'Majhen lokalni trg',
+            'Oddaljenost od srednje Evrope',
+            'DDV registracija že pri 15.600 \u20AC',
+        ],
+        maxRevenue: Infinity,
+        calculate(P) {
+            // Income tax brackets
+            const bkts = [{l:19500,r:0},{l:28000,r:0.20},{l:36300,r:0.25},{l:60000,r:0.30},{l:Infinity,r:0.35}];
+            let tax = 0, rem = P, prev = 0;
+            for (const b of bkts) { const w=b.l-prev; const a=Math.min(rem,w); tax+=a*b.r; rem-=a; prev=b.l; if(rem<=0)break; }
+            // Social insurance 16.6% (cap 66,612) + GHS 4% (cap 180,000)
+            const si = Math.min(P, 66612) * 0.166;
+            const ghs = Math.min(P, 180000) * 0.04;
+            const prispevki = si + ghs;
+            const neto = P - tax - prispevki;
+            return {
+                prispevki, dohodnina: tax, neto,
+                steps: [
+                    { label: 'Prihodki', value: P },
+                    { label: 'Socialno zavarovanje (16,6%)', value: -si, color: 'orange', note: 'max osnova 66.612 \u20AC' },
+                    { label: 'GHS zdravstvo (4%)', value: -ghs, color: 'orange' },
+                    { label: 'Dohodnina (0-35%)', value: -tax, color: 'red', note: '0% do 19.500 \u20AC' },
+                    { label: 'Na računu ti ostane', value: neto, total: true },
+                ],
+            };
+        },
+    },
+    {
+        id: 'nemcija',
+        name: 'Nemčija',
+        flag: '\u{1F1E9}\u{1F1EA}',
+        businessType: 'Freiberufler',
+        businessTypeDesc: 'Freiberufler - progresivna dohodnina do 45% + obvezno zdravstveno',
+        context: 'Nemčija je največje gospodarstvo EU. IT freelancerji (Freiberufler) so oproščeni obrtnega davka (Gewerbesteuer), a plačajo visoko dohodnino (do 45%) plus obvezno zdravstveno zavarovanje (~21% do kapice). Pokojninsko zavarovanje za IT Freiberufler ni obvezno.',
+        pros: [
+            'EU, največje gospodarstvo, velik trg',
+            'Freiberufler oprostitev Gewerbesteuer',
+            'Grundfreibetrag 12.348 \u20AC brez davka',
+            'Ni obvezne pokojnine za IT freelancerje',
+            'Močan IT trg in visoke tarife',
+        ],
+        cons: [
+            'Dohodnina do 42-45%',
+            'Obvezno zdravstveno zavarovanje ~21%',
+            'Solidaritätszuschlag 5,5% na davek',
+            'Kompleksna birokracija',
+            'Visoki življenjski stroški (München, Frankfurt)',
+        ],
+        maxRevenue: Infinity,
+        calculate(P) {
+            // German income tax formula (2026)
+            let tax;
+            if (P <= 12348) { tax = 0; }
+            else if (P <= 17799) { const y=(P-12348)/10000; tax=(914.51*y+1400)*y; }
+            else if (P <= 69878) { const z=(P-17799)/10000; tax=(173.10*z+2397)*z+1034.87; }
+            else if (P <= 277825) { tax=0.42*P-10637.73; }
+            else { tax=0.45*P-18971.48; }
+            tax = Math.max(0, Math.round(tax));
+            // Solidaritätszuschlag
+            const soli = tax > 20350 ? tax * 0.055 : 0;
+            const dohodnina = tax + soli;
+            // Zdravstveno (GKV ~17.1%) + Pflege (4.2% brez otrok)
+            const healthCap = 69750;
+            const healthBase = Math.min(P, healthCap);
+            const health = healthBase * 0.171;
+            const pflege = healthBase * 0.042;
+            const prispevki = health + pflege;
+            const neto = P - dohodnina - prispevki;
+            return {
+                prispevki, dohodnina, neto,
+                steps: [
+                    { label: 'Prihodki', value: P },
+                    { label: 'Zdravstveno zavarovanje (GKV ~17,1%)', value: -health, color: 'orange', note: `max osnova ${fmtN(healthCap)}` },
+                    { label: 'Nega (Pflegeversicherung 4,2%)', value: -pflege, color: 'orange' },
+                    { label: 'Dohodnina (progresivna formula)', value: -tax, color: 'red', note: '0% do 12.348 \u20AC' },
+                    { label: 'Solidaritätszuschlag (5,5%)', value: -soli, color: 'red' },
+                    { label: 'Na računu ti ostane', value: neto, total: true },
+                ],
+            };
+        },
+    },
+    {
+        id: 'singapur',
+        name: 'Singapur',
+        flag: '\u{1F1F8}\u{1F1EC}',
+        businessType: 'Sole Proprietorship',
+        businessTypeDesc: 'Sole Proprietorship - nizka progresivna dohodnina 0-22% + MediSave',
+        context: 'Singapur je azijski tech hub z eno najnižjih obdavčitev na svetu. Dohodnina je 0% do ~13.900 \u20AC in naraste le do 22%. Obvezen je le prispevek MediSave (~8%), brez obvezne pokojnine za samozaposlene. Tuji dohodek posameznikov ni obdavčen (teritorialni sistem).',
+        pros: [
+            'Zelo nizka dohodnina (0-22%)',
+            '0% do ~13.900 \u20AC prihodkov',
+            'Teritorialni sistem (tuji dohodek ni obdavčen)',
+            'Brez davka na kapitalske dobičke',
+            'Svetovni tech hub, poslovno okolje',
+            'Angleški jezik',
+        ],
+        cons: [
+            'Ni EU (vizum potreben)',
+            'Zelo visoki življenjski stroški',
+            'MediSave prispevek obvezen (~8%)',
+            'Skromna socialna mreža',
+            'Daleč od Evrope',
+        ],
+        maxRevenue: Infinity,
+        calculate(P_eur) {
+            const sgdRate = 1.44;
+            const P = P_eur * sgdRate;
+            // Income tax brackets (SGD)
+            const bkts = [{w:20000,r:0},{w:10000,r:0.02},{w:10000,r:0.035},{w:40000,r:0.07},{w:40000,r:0.115},{w:40000,r:0.15},{w:40000,r:0.18},{w:40000,r:0.19},{w:40000,r:0.195},{w:40000,r:0.20},{w:180000,r:0.22},{w:500000,r:0.23},{w:Infinity,r:0.24}];
+            let tax = 0, rem = P;
+            for (const b of bkts) { const a=Math.min(rem,b.w); tax+=a*b.r; rem-=a; if(rem<=0)break; }
+            tax = Math.max(0, tax - Math.min(tax * 0.60, 200)); // rebate
+            // MediSave (under 35, simplified)
+            let medisave = 0;
+            if (P > 18000) medisave = Math.min(P * 0.08, 7104);
+            else if (P > 6000) medisave = P * 0.04;
+            const toEur = 1 / sgdRate;
+            const prispevki = medisave * toEur;
+            const dohodnina = tax * toEur;
+            const neto = P_eur - prispevki - dohodnina;
+            return {
+                prispevki, dohodnina, neto,
+                steps: [
+                    { label: `Prihodki (${Math.round(P).toLocaleString('sl-SI')} SGD)`, value: P_eur },
+                    { label: 'MediSave (~8%)', value: -prispevki, color: 'orange', note: 'obvezno za samozaposlene' },
+                    { label: 'Dohodnina (0-22%)', value: -dohodnina, color: 'red', note: '0% do 20.000 SGD' },
+                    { label: 'Na računu ti ostane', value: neto, total: true },
+                ],
+            };
+        },
+    },
+    {
+        id: 'portugalska',
+        name: 'Portugalska',
+        flag: '\u{1F1F5}\u{1F1F9}',
+        businessType: 'Trabalhador Independente',
+        businessTypeDesc: 'Regime Simplificado - 75% koeficient, progresivna dohodnina do 48%',
+        context: 'Portugalska ponuja Regime Simplificado za freelancerje: le 75% prihodkov je obdavčljivih (25% se šteje kot stroški). Nekdanji NHR režim (20% za 10 let) je bil ukinjen 2024. Prispevki (21,4% na 70% prihodkov) in progresivna dohodnina (do 48%) pa skupaj tvorijo visoko obremenitev.',
+        pros: [
+            'EU članica',
+            'Regime Simplificado: 25% normirani stroški',
+            'Ugodno podnebje, kakovost življenja',
+            'Digital Nomad Visa na voljo',
+            'Rastoč tech sektor (Lisbon)',
+        ],
+        cons: [
+            'Dohodnina do 48%',
+            'Prispevki 21,4% (na 70% prihodkov)',
+            'NHR režim ukinjen (2024)',
+            'DDV 23% (med najvišjimi v EU)',
+            'Skupna obremenitev pri višjih dohodkih ~40%',
+        ],
+        maxRevenue: 200000,
+        calculate(P) {
+            // Regime Simplificado: 75% coefficient for services
+            const taxable = P * 0.75;
+            const specificDed = 4104;
+            const rendimento = Math.max(0, taxable - specificDed);
+            // IRS brackets
+            const bkts = [{l:7703,r:0.1325},{l:11623,r:0.18},{l:16472,r:0.23},{l:21321,r:0.26},{l:27146,r:0.3275},{l:39791,r:0.37},{l:51997,r:0.435},{l:81199,r:0.45},{l:Infinity,r:0.48}];
+            let irs = 0, rem = rendimento, prev = 0;
+            for (const b of bkts) { const w=b.l-prev; const a=Math.min(rem,w); irs+=a*b.r; rem-=a; prev=b.l; if(rem<=0)break; }
+            // Social security: 21.4% on 70% of income
+            const ssAnnualBase = P * 0.70;
+            const iasMonthly = 509.26;
+            const minBase = iasMonthly;
+            const maxBase = iasMonthly * 12;
+            const monthlyBase = Math.max(P > 0 ? minBase : 0, Math.min(ssAnnualBase / 12, maxBase));
+            const ss = monthlyBase * 0.214 * 12;
+            const neto = P - irs - ss;
+            return {
+                prispevki: ss, dohodnina: irs, neto,
+                steps: [
+                    { label: 'Prihodki', value: P },
+                    { label: 'Davčna osnova (75% koeficient)', value: taxable, note: '25% normirani stroški' },
+                    { label: 'Posebni odbitek', value: -specificDed },
+                    { label: 'Prispevki Seg. Social (21,4%)', value: -ss, color: 'orange', note: 'na 70% prihodkov' },
+                    { label: 'IRS dohodnina (13,25-48%)', value: -irs, color: 'red' },
+                    { label: 'Na računu ti ostane', value: neto, total: true },
+                ],
+            };
+        },
+    },
+];
+
+// =============================================
+// Stanje
+// =============================================
+let selectedCountry = 'slovenija';
+let mode = 'yearly';
+const slider = document.getElementById('amount-slider');
+const input = document.getElementById('amount-input');
+
+function getCountry(id) { return COUNTRIES.find(c => c.id === id); }
+
+// =============================================
+// Formatiranje
+// =============================================
+function fmt(v) {
+    return v.toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' \u20AC';
+}
+function fmtN(v) {
+    return v.toLocaleString('sl-SI', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' \u20AC';
+}
+function fmtPct(v) {
+    return (v * 100).toLocaleString('sl-SI', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+}
+
+// =============================================
+// Prikaz
+// =============================================
+function renderCountrySelector() {
+    const el = document.getElementById('country-selector');
+    el.innerHTML = COUNTRIES.map(c =>
+        `<button class="country-btn ${c.id === selectedCountry ? 'active' : ''}" onclick="selectCountry('${c.id}')">
+            <span class="country-flag">${c.flag}</span> ${c.name}
+        </button>`
+    ).join('');
+}
+
+function renderCountryInfo() {
+    const c = getCountry(selectedCountry);
+    const el = document.getElementById('country-info-card');
+    el.innerHTML = `
+        <div class="country-info">
+            <div class="country-info-type">${c.flag} ${c.businessType} - ${c.businessTypeDesc}</div>
+            <div class="country-info-context">${c.context}</div>
+            <div class="country-info-lists">
+                <div class="country-info-list pros">
+                    <h4>Prednosti</h4>
+                    <ul>${c.pros.map(p => `<li>${p}</li>`).join('')}</ul>
+                </div>
+                <div class="country-info-list cons">
+                    <h4>Slabosti</h4>
+                    <ul>${c.cons.map(p => `<li>${p}</li>`).join('')}</ul>
+                </div>
+            </div>
+        </div>`;
+}
+
+function render() {
+    const displayValue = parseFloat(input.value) || 0;
+    const annualRevenue = mode === 'yearly' ? displayValue : displayValue * 12;
+    const divisor = mode === 'yearly' ? 1 : 12;
+    const c = getCountry(selectedCountry);
+    const r = c.calculate(annualRevenue);
+
+    // Warning
+    const warning = document.getElementById('warning');
+    if (annualRevenue > c.maxRevenue && c.maxRevenue < Infinity) {
+        warning.innerHTML = `<strong>Opozorilo:</strong> Limit za ${c.businessType} je ${fmtN(c.maxRevenue)}/leto.`;
+        warning.classList.add('visible');
+    } else { warning.classList.remove('visible'); }
+
+    // Hero
+    const heroEl = document.getElementById('neto-amount');
+    heroEl.textContent = fmt(r.neto / divisor);
+    heroEl.classList.toggle('negative', r.neto < 0);
+    document.getElementById('hero-label').textContent = `Na računu ti ostane (${c.name})`;
+    document.getElementById('neto-sub').textContent =
+        mode === 'yearly' ? `(${fmt(r.neto / 12)} / mesec)` : `(${fmt(r.neto)} / leto)`;
+
+    // Badges
+    const effP = annualRevenue > 0 ? r.prispevki / annualRevenue : 0;
+    const effD = annualRevenue > 0 ? r.dohodnina / annualRevenue : 0;
+    const effT = annualRevenue > 0 ? (r.prispevki + r.dohodnina) / annualRevenue : 0;
+    document.getElementById('badge-prispevki').textContent = `Prispevki: ${fmtPct(effP)}`;
+    document.getElementById('badge-dohodnina').textContent = `Dohodnina: ${fmtPct(effD)}`;
+    document.getElementById('badge-total').textContent = `Skupaj državi: ${fmtPct(effT)}`;
+
+    // Bar
+    if (annualRevenue > 0 && r.neto >= 0) {
+        document.getElementById('bar-neto').style.width = (r.neto / annualRevenue * 100) + '%';
+        document.getElementById('bar-prispevki').style.width = (r.prispevki / annualRevenue * 100) + '%';
+        document.getElementById('bar-dohodnina').style.width = (r.dohodnina / annualRevenue * 100) + '%';
+    } else if (r.prispevki + r.dohodnina > 0) {
+        document.getElementById('bar-neto').style.width = '0%';
+        const total = r.prispevki + r.dohodnina;
+        document.getElementById('bar-prispevki').style.width = (r.prispevki / total * 100) + '%';
+        document.getElementById('bar-dohodnina').style.width = (r.dohodnina / total * 100) + '%';
+    } else {
+        document.getElementById('bar-neto').style.width = '0%';
+        document.getElementById('bar-prispevki').style.width = '0%';
+        document.getElementById('bar-dohodnina').style.width = '0%';
+    }
+
+    // Breakdown
+    const brkEl = document.getElementById('breakdown-content');
+    brkEl.innerHTML = r.steps.map(s => {
+        const isTotal = s.total;
+        const colorDot = s.color ? `<span class="dot" style="background:var(--${s.color})"></span>` : '';
+        const noteHtml = s.note ? ` <span class="note">(${s.note})</span>` : '';
+        const valClass = isTotal ? 'positive' : (s.value < 0 ? 'negative' : '');
+        const val = isTotal ? fmt(s.value / divisor) : (s.value < 0 ? '-' + fmt(Math.abs(s.value) / divisor) : fmt(s.value / divisor));
+
+        let html = `<div class="breakdown-row${isTotal ? ' total' : ''}">
+            <span class="breakdown-label"${isTotal ? ' style="color:var(--gray-800)"' : ''}>${isTotal ? '<span class="dot" style="background:var(--green)"></span>' : colorDot}${s.label}${noteHtml}</span>
+            <span class="breakdown-value ${valClass}">${val}</span>
+        </div>`;
+
+        if (s.expandId && s.expandItems && s.expandItems.length > 0) {
+            html += `<button class="details-toggle" onclick="toggleDetails('${s.expandId}')"><span id="${s.expandId}-arrow">&#9654;</span> Podrobnosti</button>`;
+            html += `<div class="details-content" id="${s.expandId}">`;
+            html += s.expandItems.map(ei => {
+                const eiVal = ei.suffix ? fmt(ei.val) + ei.suffix : fmt(ei.val / divisor);
+                return `<div class="detail-row"><span>${ei.label}${ei.note ? ` <span style="color:var(--gray-400)">(${ei.note})</span>` : ''}</span><span class="val">${eiVal}</span></div>`;
+            }).join('');
+            html += '</div>';
+        }
+
+        return html;
+    }).join('');
+
+    // Comparison
+    const allResults = COUNTRIES.map(ct => {
+        const res = ct.calculate(annualRevenue);
+        const total = res.prispevki + res.dohodnina;
+        return { ...ct, ...res, total, effRate: annualRevenue > 0 ? total / annualRevenue : 0 };
+    }).sort((a, b) => b.neto - a.neto);
+
+    const maxNeto = allResults.length > 0 ? Math.max(...allResults.map(r => r.neto), 1) : 1;
+    const compEl = document.getElementById('comparison-content');
+    compEl.innerHTML = allResults.map((cr, i) => {
+        const barW = annualRevenue > 0 ? Math.max(0, cr.neto / maxNeto * 100) : 0;
+        const isSelected = cr.id === selectedCountry;
+        return `<div class="compare-row${isSelected ? ' highlight' : ''}" style="cursor:pointer" onclick="selectCountry('${cr.id}')">
+            <div class="compare-header">
+                <div class="compare-left">
+                    <span class="compare-rank">${i + 1}.</span>
+                    <span class="compare-flag">${cr.flag}</span>
+                    <span class="compare-name">${cr.name}</span>
+                    <span class="compare-type">${cr.businessType}</span>
+                </div>
+                <div class="compare-right">
+                    <span class="compare-neto">${fmt(cr.neto / divisor)}</span>
+                    <span class="compare-rate">(-${fmtPct(cr.effRate)})</span>
+                </div>
+            </div>
+            <div class="compare-bar"><div class="compare-bar-fill" style="width:${barW}%"></div></div>
+        </div>`;
+    }).join('');
+}
+
+// =============================================
+// Interakcija
+// =============================================
+function selectCountry(id) {
+    selectedCountry = id;
+    renderCountrySelector();
+    renderCountryInfo();
+    render();
+}
+
+function setMode(newMode) {
+    const cur = parseFloat(input.value) || 0;
+    const oldMode = mode;
+    mode = newMode;
+    document.getElementById('btn-monthly').classList.toggle('active', mode === 'monthly');
+    document.getElementById('btn-yearly').classList.toggle('active', mode === 'yearly');
+    document.getElementById('input-label').textContent = mode === 'yearly' ? 'Letni prihodek:' : 'Mesečni prihodek:';
+    if (oldMode !== newMode) {
+        input.value = newMode === 'monthly' ? Math.round(cur / 12 / 1000) * 1000 : Math.round(cur * 12 / 1000) * 1000;
+    }
+    updateSliderRange();
+    render();
+}
+
+function updateSliderRange() {
+    const maxY = 160000;
+    const sMax = mode === 'monthly' ? Math.round(maxY / 12 / 1000) * 1000 : maxY;
+    slider.max = sMax; input.max = sMax;
+    slider.value = Math.min(parseFloat(input.value) || 0, sMax);
+    document.getElementById('slider-max-label').textContent = sMax.toLocaleString('sl-SI') + ' \u20AC';
+}
+
+function toggleDetails(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const isOpen = el.classList.toggle('open');
+    const arrow = document.getElementById(id + '-arrow');
+    if (arrow) arrow.innerHTML = isOpen ? '&#9660;' : '&#9654;';
+}
+
+slider.addEventListener('input', () => { input.value = slider.value; render(); });
+input.addEventListener('input', () => {
+    let val = parseFloat(input.value) || 0;
+    val = Math.max(0, Math.min(val, parseFloat(slider.max)));
+    slider.value = val;
+    render();
+});
+
+// Init
+renderCountrySelector();
+renderCountryInfo();
+render();
+</script>
+</body>
+</html>
