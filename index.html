@@ -94,6 +94,12 @@
         input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--blue); cursor: pointer; border: none; box-shadow: 0 2px 6px rgba(37,99,235,0.3); }
         .slider-labels { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12px; color: var(--gray-400); }
 
+        /* Health insurance toggle */
+        .hi-toggle { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding: 10px 14px; background: var(--gray-50); border-radius: 8px; cursor: pointer; }
+        .hi-toggle input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--blue); }
+        .hi-toggle label { font-size: 13px; color: var(--gray-600); cursor: pointer; flex: 1; }
+        .hi-toggle .hi-cost { font-size: 13px; font-weight: 600; color: var(--orange); white-space: nowrap; }
+
         .warning { display: none; background: #fffbeb; border: 1px solid #fbbf24; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #92400e; margin-top: 12px; line-height: 1.4; }
         .warning.visible { display: block; }
 
@@ -206,6 +212,11 @@
             </div>
         </div>
         <div class="warning" id="warning"></div>
+        <div class="hi-toggle" id="hi-toggle-container">
+            <input type="checkbox" id="hi-checkbox" onchange="render()">
+            <label for="hi-checkbox" id="hi-label">Vključi strošek zasebnega zdravstvenega zavarovanja</label>
+            <span class="hi-cost" id="hi-cost"></span>
+        </div>
     </div>
 
     <!-- Result hero -->
@@ -266,6 +277,7 @@ const COUNTRIES = [
         flag: '\u{1F1F8}\u{1F1EE}',
         businessType: 'Normiran S.P.',
         businessTypeDesc: 'Normirani samostojni podjetnik (80% normirani odhodki)',
+        healthIns: { monthly: 0, note: 'Vključeno v prispevke (+~35 \u20AC/mesec dopolnilno)' },
         context: 'Normiran S.P. je ugoden za prihodke do 60.000 \u20AC, ker se 80% prihodkov prizna kot odhodek. Nad tem zneskom so prihodki v celoti obdavčeni. Visoki prispevki (40,2%) financirajo javno zdravstvo, pokojninski sistem in socialno varnost.',
         pros: [
             'EU članica, dostop do enotnega trga',
@@ -335,6 +347,7 @@ const COUNTRIES = [
         flag: '\u{1F1E6}\u{1F1EA}',
         businessType: 'Freelance Permit',
         businessTypeDesc: 'Freelance dovoljenje v Free Zone (npr. Dubai Internet City)',
+        healthIns: { monthly: 300, note: 'Obvezno zasebno ZZ za vizum' },
         context: 'UAE se financira iz nafte, turizma, nepremičnin in pristojbin. 0% dohodnine je strateška odločitev za privabljanje tujih talentov in kapitala. Ni socialnega sistema - za zdravstvo in pokojnino poskrbite sami.',
         pros: [
             '0% dohodnine, 0% prispevkov',
@@ -368,6 +381,7 @@ const COUNTRIES = [
         flag: '\u{1F1EC}\u{1F1EA}',
         businessType: 'Mikro podjetje',
         businessTypeDesc: 'Status mikro podjetja (Individual Entrepreneur) - 1% davek na prihodke',
+        healthIns: { monthly: 100, note: 'Javno ZZ za expate ne velja. Zasebno 50-150 \u20AC/mesec' },
         context: 'Gruzija z ultra nizkim 1% davkom ciljno privablja digitalne nomade in IT freelancerje. Nizki življenjski stroški (~500-800 \u20AC/mesec) dodatno povečujejo privlačnost. Brez EU prednosti in z omejenim socialnim sistemom.',
         pros: [
             'Samo 1% davek na prihodke',
@@ -403,6 +417,7 @@ const COUNTRIES = [
         flag: '\u{1F1EA}\u{1F1EA}',
         businessType: 'OÜ (d.o.o.)',
         businessTypeDesc: 'Osaühing (OÜ) - 0% na zadržan dobiček, 20% ob izplačilu',
+        healthIns: { monthly: 0, note: 'Vključeno če plačuješ plačo (33% socialni davek)' },
         context: 'Estonija privablja podjetnike z edinstvenim modelom: 0% davka dokler dobiček ostane v podjetju. Ob izplačilu plačate 20% CIT. Prek programa e-Residency lahko podjetje vodite popolnoma online od kjerkoli.',
         pros: [
             'EU članica',
@@ -447,6 +462,7 @@ const COUNTRIES = [
         flag: '\u{1F1E7}\u{1F1EA}',
         businessType: 'Eenmanszaak',
         businessTypeDesc: 'Eenmanszaak (samostojni podjetnik) - progresivna obdavčitev do 50%',
+        healthIns: { monthly: 0, note: 'Vključeno v prispevke (mutualité)' },
         context: 'Belgija ima eno najvišjih obdavčitev v EU. Visoki davki financirajo obsežno socialno varnost: brezplačno zdravstvo, visoke pokojnine, velikodušne nadomestila za bolniško in brezposelnost. Sistem je zasnovan na solidarnosti.',
         pros: [
             'EU, centralna lega v Evropi',
@@ -504,6 +520,7 @@ const COUNTRIES = [
         flag: '\u{1F1E9}\u{1F1F0}',
         businessType: 'Enkeltmandsvirksomhed',
         businessTypeDesc: 'Enkeltmandsvirksomhed (samostojni podjetnik) - visoka progresivna obdavčitev',
+        healthIns: { monthly: 0, note: 'Vključeno v davke (brezplačno javno zdravstvo)' },
         context: 'Danski model "flexicurity" kombinira visoke davke z vrhunskimi javnimi storitvami. Brezplačno zdravstvo, izobraževanje (vključno z univerzo), velikodušna socialna podpora in visoka kakovost življenja. Davki financirajo eno najboljših družb na svetu.',
         pros: [
             'EU, najvišja kakovost življenja',
@@ -553,6 +570,7 @@ const COUNTRIES = [
         flag: '\u{1F1ED}\u{1F1F7}',
         businessType: 'Paušalni obrt',
         businessTypeDesc: 'Paušalni obrt - fiksni nizki davek do 60.000 \u20AC/leto',
+        healthIns: { monthly: 0, note: 'Vključeno v prispevke (HZZO)' },
         context: 'Hrvaška ponuja izjemno ugoden paušalni obrt za prihodke do 60.000 \u20AC. Davek je fiksen (203-1.080 \u20AC/leto), prispevki pa znašajo le ~3.500 \u20AC/leto. Nad 60.000 \u20AC je potreben prehod na redni obrt s progresivno obdavčitvijo.',
         pros: [
             'EU članica',
@@ -618,6 +636,7 @@ const COUNTRIES = [
         flag: '\u{1F1E6}\u{1F1F9}',
         businessType: 'Einzelunternehmen',
         businessTypeDesc: 'Einzelunternehmen (samostojni podjetnik) - progresivna obdavčitev + SVS',
+        healthIns: { monthly: 0, note: 'Vključeno v SVS prispevke (6,8% zdravstveno)' },
         context: 'Avstrija ima visoke prispevke za socialno varnost (SVS ~26,8%) in progresivno dohodnino do 55%. V zameno ponuja odlično javno zdravstvo, visoke pokojnine in kakovostno infrastrukturo. Gewinnfreibetrag (15% olajšava) nekoliko zniža osnovo.',
         pros: [
             'EU, stabilno okolje, centralna lega',
@@ -685,6 +704,7 @@ const COUNTRIES = [
         flag: '\u{1F1EE}\u{1F1F9}',
         businessType: 'Partita IVA (Forfettario)',
         businessTypeDesc: 'Regime Forfettario - 15% pavšalni davek, brez DDV',
+        healthIns: { monthly: 0, note: 'Vključeno v INPS prispevke (SSN)' },
         context: 'Italija ponuja režim forfettario za freelancerje do 85.000 \u20AC. Za programerje se 67% prihodkov šteje kot obdavčljiv dohodek (33% so "normirani stroški"). Davek je le 15% (ali 5% prvih 5 let). INPS prispevki (26,2%) pa so kljub temu precejšnji.',
         pros: [
             'EU članica',
@@ -728,6 +748,7 @@ const COUNTRIES = [
         flag: '\u{1F1F2}\u{1F1F9}',
         businessType: 'Sole Trader',
         businessTypeDesc: 'Sole Trader (samostojni podjetnik) - progresivna obdavčitev do 35%',
+        healthIns: { monthly: 0, note: 'Vključeno v SSC prispevke' },
         context: 'Malta kot EU članica z angleškim jezikom ponuja zmerno obdavčitev. Prispevki za socialno varnost so omejeni na max ~5.564 \u20AC/leto. Dohodnina je progresivna do 35%, kar je nižje kot v večini zahodnoevropskih držav.',
         pros: [
             'EU članica, angleški jezik',
@@ -783,6 +804,7 @@ const COUNTRIES = [
         flag: '\u{1F1EE}\u{1F1EA}',
         businessType: 'Sole Trader',
         businessTypeDesc: 'Sole Trader - dohodnina 20/40% + USC + PRSI',
+        healthIns: { monthly: 175, note: 'PRSI ne pokrije obiskov GP (~55 \u20AC). Zasebno priporočeno' },
         context: 'Irska je magnet za tech podjetja (Apple, Google, Meta) zaradi 12,5% davka na dobiček podjetij. Za samozaposlene pa je sistem manj ugoden: dohodnina do 40%, plus USC in PRSI dvigneta efektivno stopnjo na ~50% nad 100k.',
         pros: [
             'EU članica, angleški jezik',
@@ -833,6 +855,7 @@ const COUNTRIES = [
         flag: '\u{1F1EC}\u{1F1E7}',
         businessType: 'Sole Trader',
         businessTypeDesc: 'Sole Trader - dohodnina do 45% + National Insurance',
+        healthIns: { monthly: 0, note: 'Vključeno (NHS, brezplačno za rezidente)' },
         context: 'UK ima razmeroma enostaven davčni sistem za samozaposlene. Personal Allowance (12.570 GBP brez davka) in nizek NI (6%) delata nižje prihodke ugodne. Pozor: osebna olajšava se ukinja nad 100k GBP, kar ustvari efektivno 60% stopnjo. Ni več EU članica.',
         pros: [
             'Angleški jezik, velik trg',
@@ -896,6 +919,7 @@ const COUNTRIES = [
         flag: '\u{1F1FA}\u{1F1F8}',
         businessType: 'Sole Proprietorship',
         businessTypeDesc: 'Sole Proprietorship - federalni + državni davek + SE tax 15,3%',
+        healthIns: { monthly: 550, note: 'Ni javnega ZZ. ACA marketplace 400-700 \u20AC/mesec' },
         context: 'Kalifornija združuje federalni davčni sistem (10-37%) z enim najvišjih državnih davkov v ZDA (do 13,3%). Poleg tega samozaposleni plačajo 15,3% self-employment tax (Social Security + Medicare). Skupna obremenitev je med najvišjimi na svetu.',
         pros: [
             'Največji tech ekosistem (Silicon Valley)',
@@ -955,6 +979,7 @@ const COUNTRIES = [
         flag: '\u{1F1FA}\u{1F1F8}',
         businessType: 'Sole Proprietorship / LLC',
         businessTypeDesc: 'LLC ali Sole Proprietorship - 0% državni davek, samo federalni',
+        healthIns: { monthly: 500, note: 'Ni javnega ZZ. ACA marketplace 400-700 \u20AC/mesec' },
         context: 'Wyoming je najbolj davčno ugodna zvezna država v ZDA: 0% državni davek na dohodek, 0% korporativni davek, nizki življenjski stroški. Federalni davki (dohodnina + SE tax) pa še vedno veljajo. Priljubljena izbira za remote freelancerje v ZDA.',
         pros: [
             '0% državni davek na dohodek',
@@ -1006,6 +1031,7 @@ const COUNTRIES = [
         flag: '\u{1F1E8}\u{1F1FE}',
         businessType: 'Self-Employed',
         businessTypeDesc: 'Self-Employed - 0% do 19.500 \u20AC, progresivno do 35%',
+        healthIns: { monthly: 0, note: 'Vključeno (GHS/GESY 4% prispevek)' },
         context: 'Ciper je EU članica s privlačnim davčnim okoljem: 0% dohodnina do 19.500 \u20AC, korporativni davek le 12,5%, brez davka na dividende. Priljubljena izbira za IT podjetja. Prispevki (16,6% + 4% GHS) so zmerni in omejeni z zgornjo mejo.',
         pros: [
             'EU članica',
@@ -1051,6 +1077,7 @@ const COUNTRIES = [
         flag: '\u{1F1E9}\u{1F1EA}',
         businessType: 'Freiberufler',
         businessTypeDesc: 'Freiberufler - progresivna dohodnina do 45% + obvezno zdravstveno',
+        healthIns: { monthly: 0, note: 'Vključeno (GKV obvezno, ~17% do kapice)' },
         context: 'Nemčija je največje gospodarstvo EU. IT freelancerji (Freiberufler) so oproščeni obrtnega davka (Gewerbesteuer), a plačajo visoko dohodnino (do 45%) plus obvezno zdravstveno zavarovanje (~21% do kapice). Pokojninsko zavarovanje za IT Freiberufler ni obvezno.',
         pros: [
             'EU, največje gospodarstvo, velik trg',
@@ -1105,6 +1132,7 @@ const COUNTRIES = [
         flag: '\u{1F1F8}\u{1F1EC}',
         businessType: 'Sole Proprietorship',
         businessTypeDesc: 'Sole Proprietorship - nizka progresivna dohodnina 0-22% + MediSave',
+        healthIns: { monthly: 350, note: 'MediSave le za hospitalizacijo. Zasebno 200-500 \u20AC/mesec' },
         context: 'Singapur je azijski tech hub z eno najnižjih obdavčitev na svetu. Dohodnina je 0% do ~13.900 \u20AC in naraste le do 22%. Obvezen je le prispevek MediSave (~8%), brez obvezne pokojnine za samozaposlene. Tuji dohodek posameznikov ni obdavčen (teritorialni sistem).',
         pros: [
             'Zelo nizka dohodnina (0-22%)',
@@ -1155,6 +1183,7 @@ const COUNTRIES = [
         flag: '\u{1F1F5}\u{1F1F9}',
         businessType: 'Trabalhador Independente',
         businessTypeDesc: 'Regime Simplificado - 75% koeficient, progresivna dohodnina do 48%',
+        healthIns: { monthly: 0, note: 'Vključeno (SNS za vse rezidente)' },
         context: 'Portugalska ponuja Regime Simplificado za freelancerje: le 75% prihodkov je obdavčljivih (25% se šteje kot stroški). Nekdanji NHR režim (20% za 10 let) je bil ukinjen 2024. Prispevki (21,4% na 70% prihodkov) in progresivna dohodnina (do 48%) pa skupaj tvorijo visoko obremenitev.',
         pros: [
             'EU članica',
@@ -1258,12 +1287,40 @@ function renderCountryInfo() {
         </div>`;
 }
 
+function getHealthInsAnnual(country) {
+    return (country.healthIns && country.healthIns.monthly > 0) ? country.healthIns.monthly * 12 : 0;
+}
+
+function isHiChecked() {
+    return document.getElementById('hi-checkbox').checked;
+}
+
 function render() {
     const displayValue = parseFloat(input.value) || 0;
     const annualRevenue = mode === 'yearly' ? displayValue : displayValue * 12;
     const divisor = mode === 'yearly' ? 1 : 12;
     const c = getCountry(selectedCountry);
     const r = c.calculate(annualRevenue);
+    const includeHI = isHiChecked();
+    const hiAnnual = getHealthInsAnnual(c);
+
+    // Health insurance toggle label
+    const hiContainer = document.getElementById('hi-toggle-container');
+    const hiCostEl = document.getElementById('hi-cost');
+    const hiLabel = document.getElementById('hi-label');
+    if (hiAnnual > 0) {
+        hiContainer.style.display = 'flex';
+        hiCostEl.textContent = `+${fmt(hiAnnual / divisor)}`;
+        hiLabel.textContent = `Vključi zasebno zdravstveno zavarovanje (${c.healthIns.note})`;
+    } else {
+        hiContainer.style.display = 'flex';
+        hiCostEl.textContent = '';
+        hiLabel.textContent = `Zdravstveno zavarovanje: ${c.healthIns.note}`;
+        document.getElementById('hi-checkbox').checked = false;
+    }
+
+    const effectiveHI = includeHI ? hiAnnual : 0;
+    const adjustedNeto = r.neto - effectiveHI;
 
     // Warning
     const warning = document.getElementById('warning');
@@ -1274,16 +1331,17 @@ function render() {
 
     // Hero
     const heroEl = document.getElementById('neto-amount');
-    heroEl.textContent = fmt(r.neto / divisor);
-    heroEl.classList.toggle('negative', r.neto < 0);
+    heroEl.textContent = fmt(adjustedNeto / divisor);
+    heroEl.classList.toggle('negative', adjustedNeto < 0);
     document.getElementById('hero-label').textContent = `Na računu ti ostane (${c.name})`;
     document.getElementById('neto-sub').textContent =
-        mode === 'yearly' ? `(${fmt(r.neto / 12)} / mesec)` : `(${fmt(r.neto)} / leto)`;
+        mode === 'yearly' ? `(${fmt(adjustedNeto / 12)} / mesec)` : `(${fmt(adjustedNeto)} / leto)`;
 
     // Badges
-    const effP = annualRevenue > 0 ? r.prispevki / annualRevenue : 0;
+    const totalBurden = r.prispevki + r.dohodnina + effectiveHI;
+    const effP = annualRevenue > 0 ? (r.prispevki + effectiveHI) / annualRevenue : 0;
     const effD = annualRevenue > 0 ? r.dohodnina / annualRevenue : 0;
-    const effT = annualRevenue > 0 ? (r.prispevki + r.dohodnina) / annualRevenue : 0;
+    const effT = annualRevenue > 0 ? totalBurden / annualRevenue : 0;
     document.getElementById('badge-prispevki').textContent = `Prispevki: ${fmtPct(effP)}`;
     document.getElementById('badge-dohodnina').textContent = `Dohodnina: ${fmtPct(effD)}`;
     document.getElementById('badge-total').textContent = `Skupaj državi: ${fmtPct(effT)}`;
@@ -1302,6 +1360,17 @@ function render() {
         document.getElementById('bar-neto').style.width = '0%';
         document.getElementById('bar-prispevki').style.width = '0%';
         document.getElementById('bar-dohodnina').style.width = '0%';
+    }
+
+    // Add health insurance step if checked
+    if (includeHI && hiAnnual > 0) {
+        const lastStep = r.steps[r.steps.length - 1];
+        if (lastStep && lastStep.total) {
+            r.steps.splice(r.steps.length - 1, 0, {
+                label: 'Zasebno zdravstveno zavarovanje', value: -hiAnnual, color: 'orange', note: c.healthIns.note
+            });
+            lastStep.value = adjustedNeto;
+        }
     }
 
     // Breakdown
@@ -1334,15 +1403,18 @@ function render() {
     // Comparison
     const allResults = COUNTRIES.map(ct => {
         const res = ct.calculate(annualRevenue);
-        const total = res.prispevki + res.dohodnina;
-        return { ...ct, ...res, total, effRate: annualRevenue > 0 ? total / annualRevenue : 0 };
-    }).sort((a, b) => b.neto - a.neto);
+        const hi = includeHI ? getHealthInsAnnual(ct) : 0;
+        const total = res.prispevki + res.dohodnina + hi;
+        const adjNeto = res.neto - hi;
+        return { ...ct, ...res, hi, total, adjNeto, effRate: annualRevenue > 0 ? total / annualRevenue : 0 };
+    }).sort((a, b) => b.adjNeto - a.adjNeto);
 
-    const maxNeto = allResults.length > 0 ? Math.max(...allResults.map(r => r.neto), 1) : 1;
+    const maxNeto = allResults.length > 0 ? Math.max(...allResults.map(r => r.adjNeto), 1) : 1;
     const compEl = document.getElementById('comparison-content');
     compEl.innerHTML = allResults.map((cr, i) => {
-        const barW = annualRevenue > 0 ? Math.max(0, cr.neto / maxNeto * 100) : 0;
+        const barW = annualRevenue > 0 ? Math.max(0, cr.adjNeto / maxNeto * 100) : 0;
         const isSelected = cr.id === selectedCountry;
+        const hiTag = includeHI && cr.hi > 0 ? ` <span style="font-size:11px;color:var(--orange)">(+ZZ ${fmtN(cr.hi / divisor)})</span>` : '';
         return `<div class="compare-row${isSelected ? ' highlight' : ''}" style="cursor:pointer" onclick="selectCountry('${cr.id}')">
             <div class="compare-header">
                 <div class="compare-left">
@@ -1352,7 +1424,7 @@ function render() {
                     <span class="compare-type">${cr.businessType}</span>
                 </div>
                 <div class="compare-right">
-                    <span class="compare-neto">${fmt(cr.neto / divisor)}</span>
+                    <span class="compare-neto">${fmt(cr.adjNeto / divisor)}</span>${hiTag}
                     <span class="compare-rate">(-${fmtPct(cr.effRate)})</span>
                 </div>
             </div>
