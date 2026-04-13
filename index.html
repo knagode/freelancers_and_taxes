@@ -33,7 +33,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: var(--gray-50); color: var(--gray-800); line-height: 1.6; min-height: 100vh;
         }
-        .container { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+        .container { max-width: 1150px; margin: 0 auto; padding: 24px 16px 48px; }
         header { text-align: center; margin-bottom: 24px; }
         header h1 { font-size: 26px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
         header p { color: var(--gray-500); font-size: 14px; }
@@ -274,14 +274,14 @@
 
     <!-- Marginal cost chart -->
     <div class="card">
-        <div class="card-title">Strošek dodatnih 1.000 € neto</div>
+        <div class="card-title">Obdavčitev dodatnih 1.000 € neto</div>
         <div class="country-chart">
-            <div class="chart-title">Za dodatnih 1.000 € neto moraš zaradi prispevkov in davkov plačati</div>
-            <canvas id="marginal-cost-canvas" style="height:250px"></canvas>
+            <div class="chart-title">Prispevki in obdavčitev na dodatnih 1.000 € NETO glede na predhodni prihodek</div>
+            <canvas id="marginal-cost-canvas" style="height:500px"></canvas>
             <div id="marginal-cost-tooltip" class="chart-tooltip"></div>
             <div class="chart-legend">
+                <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#16a34a"></div>Neto (kar ti ostane na računu)</div>
                 <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#dc2626"></div>Gre državi (davki + prispevki)</div>
-                <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#2563eb; width:8px; height:8px; border-radius:50%"></div>Tvoj trenutni prihodek</div>
             </div>
             <div id="chart2-warning" class="warning"></div>
         </div>
@@ -1505,9 +1505,9 @@ function drawMarginalCostChart() {
         data.push({ base, grossNeeded, costToState });
     }
 
-    const maxCost = Math.max(...data.map(d => d.costToState), targetNet);
-    const yStep = maxCost <= 500 ? 100 : maxCost <= 2000 ? 500 : maxCost <= 10000 ? 1000 : 5000;
-    const yMax = Math.ceil(maxCost / yStep) * yStep || yStep;
+    const maxGross = Math.max(...data.map(d => d.grossNeeded), targetNet * 2);
+    const yStep = maxGross <= 500 ? 100 : maxGross <= 2000 ? 500 : maxGross <= 10000 ? 1000 : 5000;
+    const yMax = Math.ceil(maxGross / yStep) * yStep || yStep;
 
     const padL = 52, padR = 16, padT = 12, padB = 28;
     const cW = W - padL - padR, cH = H - padT - padB;
@@ -1553,22 +1553,32 @@ function drawMarginalCostChart() {
     function toX(p) { return padL + (p / maxBase) * cW; }
     function toY(v) { return padT + cH - (Math.max(0, v) / yMax) * cH; }
 
-    // Red area fill
+    // Green area (neto = targetNet, constant)
     ctx.beginPath();
     ctx.moveTo(toX(0), toY(0));
-    for (const d of data) ctx.lineTo(toX(d.base), toY(d.costToState));
+    for (const d of data) ctx.lineTo(toX(d.base), toY(targetNet));
     ctx.lineTo(toX(maxBase), toY(0));
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(22, 163, 74, 0.35)';
+    ctx.fill();
+
+    // Red area (cost to state, from neto line to gross line)
+    ctx.beginPath();
+    for (const d of data) ctx.lineTo(toX(d.base), toY(targetNet));
+    for (let i = data.length - 1; i >= 0; i--) ctx.lineTo(toX(data[i].base), toY(data[i].grossNeeded));
     ctx.closePath();
     ctx.fillStyle = 'rgba(220, 38, 38, 0.25)';
     ctx.fill();
 
-    // Red line
+    // Neto line (constant)
     ctx.beginPath();
-    ctx.moveTo(toX(data[0].base), toY(data[0].costToState));
-    for (const d of data) ctx.lineTo(toX(d.base), toY(d.costToState));
-    ctx.strokeStyle = '#dc2626';
-    ctx.lineWidth = 2.5;
+    ctx.moveTo(toX(0), toY(targetNet));
+    ctx.lineTo(toX(maxBase), toY(targetNet));
+    ctx.strokeStyle = '#16a34a';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
     ctx.stroke();
+    ctx.setLineDash([]);
 
     // Current income marker
     const currentIncome = mode === 'yearly' ? (parseFloat(input.value) || 0) : (parseFloat(input.value) || 0) * 12;
@@ -1613,8 +1623,9 @@ function drawMarginalCostChart() {
         const d = data[idx];
         const margRate = d.grossNeeded > 0 ? (d.costToState / d.grossNeeded * 100).toFixed(1) : '0.0';
         tooltip.innerHTML = `<strong>Predhodni prihodek: ${fmtN(d.base)}</strong><br>` +
-            `Za dodatnih 1.000 \u20AC neto mora bruto znesek znašati: <strong>${fmtN(d.grossNeeded)}</strong><br>` +
-            `<span style="color:#dc2626">\u25A0</span> Od tega gre dr\u017Eavi: <strong>${fmtN(d.costToState)}</strong> (${margRate}%)`;
+            `<span style="color:#16a34a">\u25A0</span> Bruto: <strong>${fmtN(d.grossNeeded)}</strong><br>` +
+            `<span style="color:#dc2626">\u25A0</span> Gre dr\u017Eavi: <strong>${fmtN(d.costToState)}</strong> (${margRate}%)<br>` +
+            `Neto na ra\u010Dun: <strong>1.000 \u20AC</strong>`;
         tooltip.style.display = 'block';
         tooltip.style.left = Math.min(mx + 12, rect2.width - 240) + 'px';
         tooltip.style.top = '10px';
